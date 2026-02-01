@@ -33,6 +33,9 @@
             <button class="tab-btn" data-tab="suppliers">Поставщики</button>
             <button class="tab-btn" data-tab="sales">Продажа</button>
             <button class="tab-btn" data-tab="documents">Документы</button>
+            <button class="tab-btn" data-tab="statistics">Статистика</button>
+            <button class="tab-btn" data-tab="notifications">Уведомления</button>
+            <button class="tab-btn" data-tab="users">Пользователи</button>
             <button class="tab-btn" data-tab="settings">Настройки</button>
         </nav>
 
@@ -318,6 +321,277 @@
                 </div>
             </div>
             
+            <!-- Statistics Tab -->
+            <div id="statistics" class="tab-content">
+                <div class="tab-header">
+                    <h2>Статистика и отчеты</h2>
+                    <button class="btn btn-primary" id="generateReportBtn">Сгенерировать отчет</button>
+                </div>
+                <div class="statistics-content">
+                    <!-- Overview Cards -->
+                    <div class="stats-overview">
+                        <div class="stat-card">
+                            <h3>Общая стоимость товаров</h3>
+                            <div class="stat-value" id="totalValue">0 ₽</div>
+                            <div class="stat-change positive">+12.5%</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Количество товаров</h3>
+                            <div class="stat-value" id="totalProducts">0</div>
+                            <div class="stat-change positive">+5</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Продажи за месяц</h3>
+                            <div class="stat-value" id="monthlySales">0 ₽</div>
+                            <div class="stat-change negative">-3.2%</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Низкий запас</h3>
+                            <div class="stat-value" id="lowStock">0</div>
+                            <div class="stat-change">требует внимания</div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div class="charts-section">
+                        <div class="chart-container">
+                            <h3>График продаж</h3>
+                            <canvas id="salesChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Топ товары</h3>
+                            <canvas id="topProductsChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Statistics -->
+                    <div class="detailed-stats">
+                        <div class="stats-section">
+                            <h3>Товары на складе</h3>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <label>Всего товаров:</label>
+                                    <span id="statTotalProducts">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <label>В наличии:</label>
+                                    <span id="statInStock">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <label>Мало на складе:</label>
+                                    <span id="statLowStock">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <label>Нет в наличии:</label>
+                                    <span id="statOutOfStock">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stats-section">
+                            <h3>Продажи</h3>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <label>Всего продаж:</label>
+                                    <span id="statTotalSales">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <label>Общая сумма:</label>
+                                    <span id="statTotalRevenue">0 ₽</span>
+                                </div>
+                                <div class="stat-item">
+                                    <label>Средний чек:</label>
+                                    <span id="statAverageSale">0 ₽</span>
+                                </div>
+                                <div class="stat-item">
+                                    <label>Продаж сегодня:</label>
+                                    <span id="statTodaySales">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stats-section">
+                            <h3>Поставщики</h3>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <label>Всего поставщиков:</label>
+                                    <span id="statTotalSuppliers">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <label>Активные:</label>
+                                    <span id="statActiveSuppliers">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <label>Самозанятые:</label>
+                                    <span id="statSelfEmployed">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <label>ИП:</label>
+                                    <span id="statIndividual">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reports Section -->
+                    <div class="reports-section">
+                        <h3>Отчеты</h3>
+                        <div class="report-buttons">
+                            <button class="btn btn-secondary" onclick="app.generateReport('inventory')">Отчет по складу</button>
+                            <button class="btn btn-secondary" onclick="app.generateReport('sales')">Отчет по продажам</button>
+                            <button class="btn btn-secondary" onclick="app.generateReport('suppliers')">Отчет по поставщикам</button>
+                            <button class="btn btn-secondary" onclick="app.generateReport('financial')">Финансовый отчет</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notifications Tab -->
+            <div id="notifications" class="tab-content">
+                <div class="tab-header">
+                    <h2>Уведомления и оповещения</h2>
+                    <button class="btn btn-primary" id="clearNotificationsBtn">Очистить все</button>
+                </div>
+                <div class="notifications-content">
+                    <!-- Alert Settings -->
+                    <div class="alert-settings">
+                        <h3>Настройки оповещений</h3>
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="lowStockAlert" checked>
+                                    Низкий запас товаров
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="outOfStockAlert" checked>
+                                    Отсутствие товаров
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="newSaleAlert" checked>
+                                    Новые продажи
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="documentAlert" checked>
+                                    Документы
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications List -->
+                    <div class="notifications-list">
+                        <h3>История уведомлений</h3>
+                        <div class="filter-bar">
+                            <select id="notificationFilter">
+                                <option value="all">Все типы</option>
+                                <option value="warning">Предупреждения</option>
+                                <option value="error">Ошибки</option>
+                                <option value="success">Успешно</option>
+                                <option value="info">Информация</option>
+                            </select>
+                            <button class="btn btn-secondary" id="refreshNotificationsBtn">Обновить</button>
+                        </div>
+                        <div class="notifications-container" id="notificationsList">
+                            <!-- Notifications will be added here dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- System Status -->
+                    <div class="system-status">
+                        <h3>Состояние системы</h3>
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <span class="status-label">База данных:</span>
+                                <span class="status-value" id="dbStatus">Активна</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Последнее сохранение:</span>
+                                <span class="status-value" id="lastSave">-</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Активные оповещения:</span>
+                                <span class="status-value" id="activeAlerts">0</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Размер БД:</span>
+                                <span class="status-value" id="dbSize">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Users Tab -->
+            <div id="users" class="tab-content">
+                <div class="tab-header">
+                    <h2>Управление пользователями</h2>
+                    <button class="btn btn-primary" id="addUserBtn">Добавить пользователя</button>
+                </div>
+                <div class="users-content">
+                    <!-- User List -->
+                    <div class="users-list">
+                        <div class="search-filter-bar">
+                            <div class="search-group">
+                                <label for="userSearch">Поиск пользователя:</label>
+                                <input type="text" id="userSearch" placeholder="Найти пользователя...">
+                            </div>
+                            <div class="filter-group">
+                                <label for="roleFilter">Роль:</label>
+                                <select id="roleFilter">
+                                    <option value="">Все роли</option>
+                                    <option value="admin">Администратор</option>
+                                    <option value="manager">Менеджер</option>
+                                    <option value="employee">Сотрудник</option>
+                                    <option value="viewer">Наблюдатель</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-secondary" id="clearUserFilters">Очистить</button>
+                        </div>
+                        <div class="users-table">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Имя пользователя</th>
+                                        <th>Полное имя</th>
+                                        <th>Email</th>
+                                        <th>Роль</th>
+                                        <th>Статус</th>
+                                        <th>Последний вход</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- User Activity Log -->
+                    <div class="activity-log">
+                        <h3>Журнал активности</h3>
+                        <div class="filter-bar">
+                            <select id="activityFilter">
+                                <option value="all">Все действия</option>
+                                <option value="login">Вход в систему</option>
+                                <option value="create">Создание</option>
+                                <option value="update">Обновление</option>
+                                <option value="delete">Удаление</option>
+                            </select>
+                            <button class="btn btn-secondary" id="refreshActivityBtn">Обновить</button>
+                        </div>
+                        <div class="activity-container" id="activityList">
+                            <!-- Activity items will be added here dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Settings Tab -->
             <div id="settings" class="tab-content">
                 <div class="tab-header">
@@ -349,7 +623,12 @@
                     <div class="settings-section">
                         <h3>Данные</h3>
                         <div class="setting-item">
-                            <button class="btn btn-secondary" id="clearAllDataBtn">Очистить все данные</button>
+                            <button class="btn btn-secondary" id="backupDataBtn">Создать резервную копию</button>
+                            <button class="btn btn-secondary" id="restoreDataBtn">Восстановить из копии</button>
+                            <input type="file" id="restoreFile" accept=".json" style="display: none;">
+                        </div>
+                        <div class="setting-item">
+                            <button class="btn btn-danger" id="clearAllDataBtn">Очистить все данные</button>
                             <span class="warning">Внимание: это действие необратимо!</span>
                         </div>
                     </div>
@@ -483,6 +762,53 @@
                     </div>
                 </form>
             </div>
+        </div>
+    </div>
+
+    <!-- User Management Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeUserModal">&times;</span>
+            <h3 id="userModalTitle">Добавить пользователя</h3>
+            <form id="userForm">
+                <div class="form-group">
+                    <label for="userUsername">Имя пользователя:</label>
+                    <input type="text" id="userUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="userFullName">Полное имя:</label>
+                    <input type="text" id="userFullName" required>
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email:</label>
+                    <input type="email" id="userEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="userPassword">Пароль:</label>
+                    <input type="password" id="userPassword">
+                </div>
+                <div class="form-group">
+                    <label for="userRole">Роль:</label>
+                    <select id="userRole" required>
+                        <option value="">Выберите роль</option>
+                        <option value="admin">Администратор</option>
+                        <option value="manager">Менеджер</option>
+                        <option value="employee">Сотрудник</option>
+                        <option value="viewer">Наблюдатель</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="userStatus">Статус:</label>
+                    <select id="userStatus">
+                        <option value="active">Активен</option>
+                        <option value="inactive">Неактивен</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <button type="button" class="btn btn-secondary" id="cancelUserBtn">Отмена</button>
+                </div>
+            </form>
         </div>
     </div>
 

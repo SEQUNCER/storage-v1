@@ -4,6 +4,13 @@ class StorageApp {
         this.dbVersion = 1;
         this.db = null;
         this.cart = [];
+        this.notifications = [];
+        this.alertSettings = {
+            lowStock: true,
+            outOfStock: true,
+            newSale: true,
+            document: true
+        };
         
         this.init();
     }
@@ -13,6 +20,7 @@ class StorageApp {
         this.setupEventListeners();
         await this.loadData();
         this.loadSavedTheme();
+        this.initNotificationSystem();
         this.showNotification('Приложение Storage успешно загружено', 'info');
     }
 
@@ -55,6 +63,19 @@ class StorageApp {
     setupEventListeners() {
         const tabButtons = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.getAttribute('data-tab');
+                this.switchTab(tabName);
+                
+                // Refresh statistics when statistics tab is opened
+                if (tabName === 'statistics') {
+                    this.loadStatistics();
+                }
+            });
+        });
 
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -208,6 +229,54 @@ class StorageApp {
             this.clearAllData();
         });
 
+        // Statistics functionality
+        document.getElementById('generateReportBtn').addEventListener('click', () => {
+            this.generateReport();
+        });
+
+        // Backup and restore functionality
+        document.getElementById('backupDataBtn').addEventListener('click', () => {
+            this.backupData();
+        });
+
+        document.getElementById('restoreDataBtn').addEventListener('click', () => {
+            document.getElementById('restoreFile').click();
+        });
+
+        document.getElementById('restoreFile').addEventListener('change', (e) => {
+            this.restoreData(e.target.files[0]);
+        });
+
+        // Notification system functionality
+        document.getElementById('clearNotificationsBtn').addEventListener('click', () => {
+            this.clearNotifications();
+        });
+
+        document.getElementById('refreshNotificationsBtn').addEventListener('click', () => {
+            this.loadNotifications();
+        });
+
+        document.getElementById('notificationFilter').addEventListener('change', () => {
+            this.filterNotifications();
+        });
+
+        // Alert settings listeners
+        document.getElementById('lowStockAlert').addEventListener('change', () => {
+            this.updateAlertSettings();
+        });
+
+        document.getElementById('outOfStockAlert').addEventListener('change', () => {
+            this.updateAlertSettings();
+        });
+
+        document.getElementById('newSaleAlert').addEventListener('change', () => {
+            this.updateAlertSettings();
+        });
+
+        document.getElementById('documentAlert').addEventListener('change', () => {
+            this.updateAlertSettings();
+        });
+
         // Закрытие модальных окон по клику вне их
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
@@ -339,6 +408,7 @@ class StorageApp {
         await this.loadSalesHistory();
         await this.loadAvailableProducts();
         await this.loadDocuments();
+        await this.loadStatistics();
     }
 
     async loadProducts() {
@@ -1348,6 +1418,720 @@ ${document.content}
                 this.showNotification('Ошибка при удалении данных: ' + error.message, 'error');
             }
         }
+    }
+
+    // Statistics and reporting methods
+    async loadStatistics() {
+        try {
+            await this.updateOverviewCards();
+            await this.updateDetailedStats();
+            await this.drawCharts();
+        } catch (error) {
+            this.showNotification('Ошибка загрузки статистики', 'error');
+        }
+    }
+
+    async updateOverviewCards() {
+        try {
+            const products = await this.getAllData('warehouse');
+            const sales = await this.getAllData('sales');
+            const suppliers = await this.getAllData('suppliers');
+
+            // Calculate total value
+            const totalValue = products.reduce((sum, product) => {
+                return sum + (product.quantity * product.salePrice);
+            }, 0);
+
+            // Count low stock items
+            const lowStock = products.filter(product => product.quantity > 0 && product.quantity <= 5).length;
+
+            // Calculate monthly sales
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlySales = sales
+                .filter(sale => {
+                    const saleDate = new Date(sale.date);
+                    return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
+                })
+                .reduce((sum, sale) => sum + sale.totalAmount, 0);
+
+            // Update UI
+            document.getElementById('totalValue').textContent = `${totalValue.toFixed(2)} ₽`;
+            document.getElementById('totalProducts').textContent = products.length;
+            document.getElementById('monthlySales').textContent = `${monthlySales.toFixed(2)} ₽`;
+            document.getElementById('lowStock').textContent = lowStock;
+        } catch (error) {
+            console.error('Error updating overview cards:', error);
+        }
+    }
+
+    async updateDetailedStats() {
+        try {
+            const products = await this.getAllData('warehouse');
+            const sales = await this.getAllData('sales');
+            const suppliers = await this.getAllData('suppliers');
+
+            // Product statistics
+            const inStock = products.filter(p => p.quantity > 0).length;
+            const lowStock = products.filter(p => p.quantity > 0 && p.quantity <= 5).length;
+            const outOfStock = products.filter(p => p.quantity === 0).length;
+
+            document.getElementById('statTotalProducts').textContent = products.length;
+            document.getElementById('statInStock').textContent = inStock;
+            document.getElementById('statLowStock').textContent = lowStock;
+            document.getElementById('statOutOfStock').textContent = outOfStock;
+
+            // Sales statistics
+            const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+            const averageSale = sales.length > 0 ? totalRevenue / sales.length : 0;
+            const today = new Date().toDateString();
+            const todaySales = sales.filter(sale => new Date(sale.date).toDateString() === today).length;
+
+            document.getElementById('statTotalSales').textContent = sales.length;
+            document.getElementById('statTotalRevenue').textContent = `${totalRevenue.toFixed(2)} ₽`;
+            document.getElementById('statAverageSale').textContent = `${averageSale.toFixed(2)} ₽`;
+            document.getElementById('statTodaySales').textContent = todaySales;
+
+            // Supplier statistics
+            const selfEmployed = suppliers.filter(s => s.type === 'self_employed').length;
+            const individual = suppliers.filter(s => s.type === 'individual').length;
+            const company = suppliers.filter(s => s.type === 'company').length;
+
+            document.getElementById('statTotalSuppliers').textContent = suppliers.length;
+            document.getElementById('statActiveSuppliers').textContent = suppliers.length; // All suppliers are considered active
+            document.getElementById('statSelfEmployed').textContent = selfEmployed;
+            document.getElementById('statIndividual').textContent = individual;
+        } catch (error) {
+            console.error('Error updating detailed stats:', error);
+        }
+    }
+
+    async drawCharts() {
+        await this.drawSalesChart();
+        await this.drawTopProductsChart();
+    }
+
+    async drawSalesChart() {
+        try {
+            const canvas = document.getElementById('salesChart');
+            const ctx = canvas.getContext('2d');
+            const sales = await this.getAllData('sales');
+
+            // Prepare data for last 7 days
+            const last7Days = [];
+            const salesData = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateString = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+                
+                const daySales = sales.filter(sale => 
+                    new Date(sale.date).toDateString() === date.toDateString()
+                ).reduce((sum, sale) => sum + sale.totalAmount, 0);
+                
+                last7Days.push(dateString);
+                salesData.push(daySales);
+            }
+
+            // Simple bar chart
+            const maxValue = Math.max(...salesData, 1);
+            const barWidth = canvas.width / (last7Days.length * 2);
+            const chartHeight = canvas.height - 40;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw bars
+            salesData.forEach((value, index) => {
+                const barHeight = (value / maxValue) * chartHeight;
+                const x = index * barWidth * 2 + barWidth / 2;
+                const y = canvas.height - barHeight - 20;
+                
+                ctx.fillStyle = '#667eea';
+                ctx.fillRect(x, y, barWidth, barHeight);
+                
+                // Draw value on top
+                ctx.fillStyle = '#000000';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${value.toFixed(0)} ₽`, x + barWidth / 2, y - 5);
+                
+                // Draw date label
+                ctx.fillText(last7Days[index], x + barWidth / 2, canvas.height - 5);
+            });
+        } catch (error) {
+            console.error('Error drawing sales chart:', error);
+        }
+    }
+
+    async drawTopProductsChart() {
+        try {
+            const canvas = document.getElementById('topProductsChart');
+            const ctx = canvas.getContext('2d');
+            const sales = await this.getAllData('sales');
+
+            // Calculate top products by sales
+            const productSales = {};
+            
+            sales.forEach(sale => {
+                sale.items.forEach(item => {
+                    if (!productSales[item.name]) {
+                        productSales[item.name] = 0;
+                    }
+                    productSales[item.name] += item.quantity;
+                });
+            });
+
+            // Get top 5 products
+            const topProducts = Object.entries(productSales)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            if (topProducts.length === 0) {
+                ctx.fillStyle = '#000000';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Нет данных о продажах', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            // Draw horizontal bar chart
+            const maxQuantity = Math.max(...topProducts.map(p => p[1]));
+            const barHeight = 25;
+            const startY = 20;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            topProducts.forEach((product, index) => {
+                const [name, quantity] = product;
+                const barWidth = (quantity / maxQuantity) * (canvas.width - 100);
+                const y = startY + index * (barHeight + 10);
+
+                // Draw bar
+                ctx.fillStyle = '#667eea';
+                ctx.fillRect(10, y, barWidth, barHeight);
+
+                // Draw product name
+                ctx.fillStyle = '#000000';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(name, barWidth + 20, y + barHeight / 2 + 3);
+
+                // Draw quantity
+                ctx.textAlign = 'right';
+                ctx.fillText(`${quantity} шт.`, barWidth + 15, y + barHeight / 2 + 3);
+            });
+        } catch (error) {
+            console.error('Error drawing top products chart:', error);
+        }
+    }
+
+    async generateReport(type = 'comprehensive') {
+        try {
+            const products = await this.getAllData('warehouse');
+            const sales = await this.getAllData('sales');
+            const suppliers = await this.getAllData('suppliers');
+
+            let reportContent = '';
+            const date = new Date().toLocaleString('ru-RU');
+
+            switch (type) {
+                case 'inventory':
+                    reportContent = this.generateInventoryReport(products, date);
+                    break;
+                case 'sales':
+                    reportContent = this.generateSalesReport(sales, date);
+                    break;
+                case 'suppliers':
+                    reportContent = this.generateSuppliersReport(suppliers, date);
+                    break;
+                case 'financial':
+                    reportContent = this.generateFinancialReport(products, sales, date);
+                    break;
+                default:
+                    reportContent = this.generateComprehensiveReport(products, sales, suppliers, date);
+            }
+
+            this.downloadReport(reportContent, `report_${type}_${date.replace(/[:.]/g, '-')}.txt`);
+            this.showNotification('Отчет успешно сгенерирован', 'success');
+        } catch (error) {
+            this.showNotification('Ошибка при генерации отчета: ' + error.message, 'error');
+        }
+    }
+
+    generateInventoryReport(products, date) {
+        const totalValue = products.reduce((sum, p) => sum + (p.quantity * p.salePrice), 0);
+        const inStock = products.filter(p => p.quantity > 0).length;
+        const lowStock = products.filter(p => p.quantity > 0 && p.quantity <= 5).length;
+        const outOfStock = products.filter(p => p.quantity === 0).length;
+
+        return `
+========================================
+ОТЧЕТ ПО СКЛАДУ
+========================================
+Дата: ${date}
+
+ОБЩАЯ СТАТИСТИКА:
+- Всего товаров: ${products.length}
+- Общая стоимость: ${totalValue.toFixed(2)} ₽
+- В наличии: ${inStock}
+- Мало на складе: ${lowStock}
+- Нет в наличии: ${outOfStock}
+
+ДЕТАЛЬНЫЙ СПИСОК ТОВАРОВ:
+${products.map(p => 
+    `${p.name} - ${p.quantity} шт. - ${p.salePrice} ₽/шт. - ${(p.quantity * p.salePrice).toFixed(2)} ₽`
+).join('\n')}
+========================================
+        `.trim();
+    }
+
+    generateSalesReport(sales, date) {
+        const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
+        const averageSale = sales.length > 0 ? totalRevenue / sales.length : 0;
+
+        return `
+========================================
+ОТЧЕТ ПО ПРОДАЖАМ
+========================================
+Дата: ${date}
+
+ОБЩАЯ СТАТИСТИКА:
+- Всего продаж: ${sales.length}
+- Общая выручка: ${totalRevenue.toFixed(2)} ₽
+- Средний чек: ${averageSale.toFixed(2)} ₽
+
+ПОСЛЕДНИЕ ПРОДАЖИ:
+${sales.slice(-10).reverse().map(s => 
+    `${new Date(s.date).toLocaleDateString('ru-RU')} - ${s.customerName} - ${s.totalAmount.toFixed(2)} ₽`
+).join('\n')}
+========================================
+        `.trim();
+    }
+
+    generateSuppliersReport(suppliers, date) {
+        const selfEmployed = suppliers.filter(s => s.type === 'self_employed').length;
+        const individual = suppliers.filter(s => s.type === 'individual').length;
+        const company = suppliers.filter(s => s.type === 'company').length;
+
+        return `
+========================================
+ОТЧЕТ ПО ПОСТАВЩИКАМ
+========================================
+Дата: ${date}
+
+ОБЩАЯ СТАТИСТИКА:
+- Всего поставщиков: ${suppliers.length}
+- Самозанятые: ${selfEmployed}
+- ИП: ${individual}
+- ООО: ${company}
+
+СПИСОК ПОСТАВЩИКОВ:
+${suppliers.map(s => 
+    `${s.name} - ${this.getSupplierTypeText(s.type)} - ${s.phone}`
+).join('\n')}
+========================================
+        `.trim();
+    }
+
+    generateFinancialReport(products, sales, date) {
+        const totalValue = products.reduce((sum, p) => sum + (p.quantity * p.salePrice), 0);
+        const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const monthlyRevenue = sales
+            .filter(s => {
+                const saleDate = new Date(s.date);
+                return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
+            })
+            .reduce((sum, s) => sum + s.totalAmount, 0);
+
+        return `
+========================================
+ФИНАНСОВЫЙ ОТЧЕТ
+========================================
+Дата: ${date}
+
+АКТИВЫ:
+- Стоимость товаров на складе: ${totalValue.toFixed(2)} ₽
+
+ДОХОДЫ:
+- Общая выручка: ${totalRevenue.toFixed(2)} ₽
+- Выручка за текущий месяц: ${monthlyRevenue.toFixed(2)} ₽
+
+ПОКАЗАТЕЛИ:
+- Количество продаж: ${sales.length}
+- Средний чек: ${sales.length > 0 ? (totalRevenue / sales.length).toFixed(2) : 0} ₽
+========================================
+        `.trim();
+    }
+
+    generateComprehensiveReport(products, sales, suppliers, date) {
+        return `
+========================================
+КОМПЛЕКСНЫЙ ОТЧЕТ
+========================================
+Дата: ${date}
+
+СКЛАД:
+- Всего товаров: ${products.length}
+- Общая стоимость: ${products.reduce((sum, p) => sum + (p.quantity * p.salePrice), 0).toFixed(2)} ₽
+
+ПРОДАЖИ:
+- Всего продаж: ${sales.length}
+- Общая выручка: ${sales.reduce((sum, s) => sum + s.totalAmount, 0).toFixed(2)} ₽
+
+ПОСТАВЩИКИ:
+- Всего поставщиков: ${suppliers.length}
+
+========================================
+        `.trim();
+    }
+
+    downloadReport(content, filename) {
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // Backup and restore methods
+    async backupData() {
+        try {
+            const backupData = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                data: {
+                    products: await this.getAllData('warehouse'),
+                    suppliers: await this.getAllData('suppliers'),
+                    sales: await this.getAllData('sales'),
+                    documents: await this.getAllData('documents')
+                }
+            };
+
+            const backupJson = JSON.stringify(backupData, null, 2);
+            const filename = `storage_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+            
+            this.downloadReport(backupJson, filename);
+            this.showNotification('Резервная копия успешно создана', 'success');
+        } catch (error) {
+            this.showNotification('Ошибка при создании резервной копии: ' + error.message, 'error');
+        }
+    }
+
+    async restoreData(file) {
+        if (!file) {
+            this.showNotification('Файл не выбран', 'error');
+            return;
+        }
+
+        try {
+            const text = await file.text();
+            const backupData = JSON.parse(text);
+
+            // Validate backup structure
+            if (!backupData.data || !backupData.data.products || !backupData.data.suppliers || !backupData.data.sales || !backupData.data.documents) {
+                throw new Error('Неверный формат файла резервной копии');
+            }
+
+            // Clear existing data
+            await this.clearAllDataInternal();
+
+            // Restore data
+            for (const product of backupData.data.products) {
+                await this.addData('warehouse', product);
+            }
+
+            for (const supplier of backupData.data.suppliers) {
+                await this.addData('suppliers', supplier);
+            }
+
+            for (const sale of backupData.data.sales) {
+                await this.addData('sales', sale);
+            }
+
+            for (const document of backupData.data.documents) {
+                await this.addData('documents', document);
+            }
+
+            // Reload all data
+            await this.loadData();
+
+            this.showNotification('Данные успешно восстановлены из резервной копии', 'success');
+        } catch (error) {
+            this.showNotification('Ошибка при восстановлении данных: ' + error.message, 'error');
+        }
+    }
+
+    async clearAllDataInternal() {
+        // Clear all object stores without confirmation
+        const stores = ['warehouse', 'suppliers', 'sales', 'documents'];
+        
+        for (const store of stores) {
+            const allData = await this.getAllData(store);
+            for (const item of allData) {
+                await this.deleteData(store, item.id);
+            }
+        }
+    }
+
+    // Notification System Methods
+    initNotificationSystem() {
+        this.loadAlertSettings();
+        this.loadNotifications();
+        this.updateSystemStatus();
+        
+        // Start periodic checks
+        setInterval(() => {
+            this.checkAlerts();
+        }, 30000); // Check every 30 seconds
+    }
+
+    loadAlertSettings() {
+        const saved = localStorage.getItem('alertSettings');
+        if (saved) {
+            this.alertSettings = JSON.parse(saved);
+            this.updateAlertSettingsUI();
+        }
+    }
+
+    updateAlertSettingsUI() {
+        document.getElementById('lowStockAlert').checked = this.alertSettings.lowStock;
+        document.getElementById('outOfStockAlert').checked = this.alertSettings.outOfStock;
+        document.getElementById('newSaleAlert').checked = this.alertSettings.newSale;
+        document.getElementById('documentAlert').checked = this.alertSettings.document;
+    }
+
+    updateAlertSettings() {
+        this.alertSettings = {
+            lowStock: document.getElementById('lowStockAlert').checked,
+            outOfStock: document.getElementById('outOfStockAlert').checked,
+            newSale: document.getElementById('newSaleAlert').checked,
+            document: document.getElementById('documentAlert').checked
+        };
+        
+        localStorage.setItem('alertSettings', JSON.stringify(this.alertSettings));
+        this.showNotification('Настройки оповещений обновлены', 'success');
+    }
+
+    addNotification(title, message, type = 'info', data = null) {
+        const notification = {
+            id: Date.now(),
+            title,
+            message,
+            type,
+            timestamp: new Date().toISOString(),
+            data
+        };
+        
+        this.notifications.unshift(notification);
+        
+        // Keep only last 100 notifications
+        if (this.notifications.length > 100) {
+            this.notifications = this.notifications.slice(0, 100);
+        }
+        
+        this.updateNotificationsList();
+        this.updateSystemStatus();
+    }
+
+    loadNotifications() {
+        const saved = localStorage.getItem('notifications');
+        if (saved) {
+            this.notifications = JSON.parse(saved);
+            this.updateNotificationsList();
+        }
+    }
+
+    saveNotifications() {
+        localStorage.setItem('notifications', JSON.stringify(this.notifications));
+    }
+
+    updateNotificationsList() {
+        const container = document.getElementById('notificationsList');
+        const filter = document.getElementById('notificationFilter').value;
+        
+        let filteredNotifications = this.notifications;
+        if (filter !== 'all') {
+            filteredNotifications = this.notifications.filter(n => n.type === filter);
+        }
+        
+        container.innerHTML = '';
+        
+        if (filteredNotifications.length === 0) {
+            container.innerHTML = '<div class="empty-state">Нет уведомлений</div>';
+            return;
+        }
+        
+        filteredNotifications.forEach(notification => {
+            const item = document.createElement('div');
+            item.className = `notification-item ${notification.type}`;
+            
+            const icon = this.getNotificationIcon(notification.type);
+            const time = new Date(notification.timestamp).toLocaleString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: 'numeric',
+                month: 'short'
+            });
+            
+            item.innerHTML = `
+                <div class="notification-icon">${icon}</div>
+                <div class="notification-content">
+                    <div class="notification-title">${notification.title}</div>
+                    <div class="notification-message">${notification.message}</div>
+                    <div class="notification-time">${time}</div>
+                </div>
+            `;
+            
+            container.appendChild(item);
+        });
+        
+        this.saveNotifications();
+    }
+
+    getNotificationIcon(type) {
+        const icons = {
+            'warning': '⚠️',
+            'error': '❌',
+            'success': '✅',
+            'info': 'ℹ️'
+        };
+        return icons[type] || 'ℹ️';
+    }
+
+    clearNotifications() {
+        if (confirm('Вы уверены, что хотите очистить все уведомления?')) {
+            this.notifications = [];
+            this.updateNotificationsList();
+            this.updateSystemStatus();
+            this.showNotification('Все уведомления очищены', 'success');
+        }
+    }
+
+    filterNotifications() {
+        this.updateNotificationsList();
+    }
+
+    async checkAlerts() {
+        try {
+            await this.checkLowStockAlerts();
+            await this.checkOutOfStockAlerts();
+            this.updateSystemStatus();
+        } catch (error) {
+            console.error('Error checking alerts:', error);
+        }
+    }
+
+    async checkLowStockAlerts() {
+        if (!this.alertSettings.lowStock) return;
+        
+        const products = await this.getAllData('warehouse');
+        const lowStockProducts = products.filter(p => p.quantity > 0 && p.quantity <= 5);
+        
+        lowStockProducts.forEach(product => {
+            const existingNotification = this.notifications.find(n => 
+                n.type === 'warning' && 
+                n.data && 
+                n.data.type === 'lowStock' && 
+                n.data.productId === product.id
+            );
+            
+            if (!existingNotification) {
+                this.addNotification(
+                    'Низкий запас товара',
+                    `Товар "${product.name}" имеет низкий запас: ${product.quantity} шт.`,
+                    'warning',
+                    { type: 'lowStock', productId: product.id }
+                );
+            }
+        });
+    }
+
+    async checkOutOfStockAlerts() {
+        if (!this.alertSettings.outOfStock) return;
+        
+        const products = await this.getAllData('warehouse');
+        const outOfStockProducts = products.filter(p => p.quantity === 0);
+        
+        outOfStockProducts.forEach(product => {
+            const existingNotification = this.notifications.find(n => 
+                n.type === 'error' && 
+                n.data && 
+                n.data.type === 'outOfStock' && 
+                n.data.productId === product.id
+            );
+            
+            if (!existingNotification) {
+                this.addNotification(
+                    'Товар закончился',
+                    `Товар "${product.name}" отсутствует на складе.`,
+                    'error',
+                    { type: 'outOfStock', productId: product.id }
+                );
+            }
+        });
+    }
+
+    updateSystemStatus() {
+        // Update database status
+        document.getElementById('dbStatus').textContent = this.db ? 'Активна' : 'Неактивна';
+        document.getElementById('dbStatus').className = this.db ? 'status-value active' : 'status-value inactive';
+        
+        // Update last save time
+        const lastSave = localStorage.getItem('lastSaveTime');
+        if (lastSave) {
+            const time = new Date(lastSave).toLocaleString('ru-RU');
+            document.getElementById('lastSave').textContent = time;
+        }
+        
+        // Update active alerts count
+        const activeAlerts = this.notifications.filter(n => 
+            n.type === 'warning' || n.type === 'error'
+        ).length;
+        document.getElementById('activeAlerts').textContent = activeAlerts;
+        
+        // Estimate database size
+        this.estimateDatabaseSize();
+    }
+
+    async estimateDatabaseSize() {
+        try {
+            let totalSize = 0;
+            const stores = ['warehouse', 'suppliers', 'sales', 'documents'];
+            
+            for (const store of stores) {
+                const data = await this.getAllData(store);
+                totalSize += JSON.stringify(data).length;
+            }
+            
+            const sizeInKB = (totalSize / 1024).toFixed(2);
+            document.getElementById('dbSize').textContent = `${sizeInKB} КБ`;
+        } catch (error) {
+            document.getElementById('dbSize').textContent = 'Ошибка';
+        }
+    }
+
+    // Override showNotification to also add to notification system
+    showNotification(message, type = 'info') {
+        // Call original notification display
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification ${type}`;
+        notification.classList.add('show');
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+        
+        // Add to notification system
+        this.addNotification('Системное уведомление', message, type);
     }
 }
 

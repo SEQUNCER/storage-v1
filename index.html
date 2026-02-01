@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage - Система управления складом</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="icon.png">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="title-bar">
+                <div class="app-title">
+                    <img src="icon.png" alt="Storage" class="app-icon">
+                    <h1>Storage</h1>
+                </div>
+                <div class="window-controls">
+                    <div class="window-control" title="Свернуть">_</div>
+                    <div class="window-control" title="Развернуть">□</div>
+                    <div class="window-control" title="Закрыть">×</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="importBtn" class="btn btn-secondary">Импорт</button>
+                <button id="exportBtn" class="btn btn-secondary">Экспорт</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="warehouse">Склад</button>
+            <button class="tab-btn" data-tab="suppliers">Поставщики</button>
+            <button class="tab-btn" data-tab="sales">Продажа</button>
+            <button class="tab-btn" data-tab="documents">Документы</button>
+            <button class="tab-btn" data-tab="settings">Настройки</button>
+        </nav>
+
+        <main class="content">
+            <div id="warehouse" class="tab-content active">
+                <div class="tab-header">
+                    <h2>Склад</h2>
+                    <button class="btn btn-primary" id="addProductBtn">Добавить товар</button>
+                </div>
+                <div class="search-filter-bar">
+                    <div class="search-group">
+                        <label for="productSearch">Поиск:</label>
+                        <input type="text" id="productSearch" placeholder="Найти товар...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="supplierFilter">Поставщик:</label>
+                        <select id="supplierFilter">
+                            <option value="">Все поставщики</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="stockFilter">Наличие:</label>
+                        <select id="stockFilter">
+                            <option value="">Все товары</option>
+                            <option value="instock">В наличии</option>
+                            <option value="lowstock">Мало на складе</option>
+                            <option value="outofstock">Нет в наличии</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" id="clearFilters">Очистить</button>
+                </div>
+                <div class="warehouse-content">
+                    <div class="products-list" id="productsList">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Название товара</th>
+                                    <th>Закупочная цена</th>
+                                    <th>Цена продажи</th>
+                                    <th>Количество</th>
+                                    <th>Поставщик</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="suppliers" class="tab-content">
+                <div class="tab-header">
+                    <h2>Поставщики</h2>
+                    <button class="btn btn-primary" id="addSupplierBtn">Добавить поставщика</button>
+                </div>
+                <div class="search-filter-bar">
+                    <div class="search-group">
+                        <label for="supplierSearch">Поиск:</label>
+                        <input type="text" id="supplierSearch" placeholder="Найти поставщика...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="supplierTypeFilter">Тип:</label>
+                        <select id="supplierTypeFilter">
+                            <option value="">Все типы</option>
+                            <option value="self_employed">Самозанятый</option>
+                            <option value="individual">ИП</option>
+                            <option value="company">ООО</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" id="clearSupplierFilters">Очистить</button>
+                </div>
+                <div class="suppliers-content">
+                    <div class="suppliers-list" id="suppliersList">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Тип</th>
+                                    <th>Наименование</th>
+                                    <th>ИНН</th>
+                                    <th>ОГРН</th>
+                                    <th>Контактная информация</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suppliersTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sales" class="tab-content">
+                <div class="tab-header">
+                    <h2>Продажа</h2>
+                    <button class="btn btn-primary" id="newSaleBtn">Новая продажа</button>
+                </div>
+                <div class="sales-content">
+                    <div class="sale-interface">
+                        <div class="product-selection">
+                            <h3>Выберите товары</h3>
+                            <div class="search-filter-bar">
+                                <div class="search-group">
+                                    <label for="saleProductSearch">Поиск товара:</label>
+                                    <input type="text" id="saleProductSearch" placeholder="Найти товар...">
+                                </div>
+                            </div>
+                            <div class="available-products" id="availableProducts">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Товар</th>
+                                            <th>Цена</th>
+                                            <th>Количество</th>
+                                            <th>Действие</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="availableProductsBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="sale-cart">
+                            <h3>Корзина</h3>
+                            <div class="cart-items" id="cartItems">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Товар</th>
+                                            <th>Кол-во</th>
+                                            <th>Цена</th>
+                                            <th>Сумма</th>
+                                            <th>Действие</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cartItemsBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="cart-summary">
+                                <div class="total-row">
+                                    <strong>Итого:</strong>
+                                    <span id="totalAmount">0.00 ₽</span>
+                                </div>
+                                <div class="payment-method">
+                                    <label>Способ оплаты:</label>
+                                    <select id="paymentMethod">
+                                        <option value="cash">Наличные</option>
+                                        <option value="card">Карта</option>
+                                        <option value="transfer">Перевод</option>
+                                    </select>
+                                </div>
+                                <div class="customer-info">
+                                    <label>Покупатель:</label>
+                                    <input type="text" id="customerName" placeholder="ФИО покупателя">
+                                </div>
+                                <button class="btn btn-primary" id="completeSaleBtn">Завершить продажу</button>
+                                <button class="btn btn-secondary" id="clearCartBtn">Очистить корзину</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="sales-history">
+                        <h3>История продаж</h3>
+                        <button class="btn btn-secondary" id="refreshSalesBtn">Обновить</button>
+                        <div class="sales-list">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Дата</th>
+                                        <th>Покупатель</th>
+                                        <th>Товары</th>
+                                        <th>Сумма</th>
+                                        <th>Оплата</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="salesHistoryBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="documents" class="tab-content">
+                <div class="tab-header">
+                    <h2>Документы</h2>
+                    <button class="btn btn-primary" id="createDocumentBtn">Создать документ</button>
+                </div>
+                <div class="documents-content">
+                    <div class="document-types">
+                        <h3>Типы документов</h3>
+                        <div class="doc-type-buttons">
+                            <button class="btn btn-secondary" onclick="app.createDocument('invoice')">Счет-фактура</button>
+                            <button class="btn btn-secondary" onclick="app.createDocument('act')">Акт выполненных работ</button>
+                            <button class="btn btn-secondary" onclick="app.createDocument('contract')">Договор</button>
+                            <button class="btn btn-secondary" onclick="app.createDocument('report')">Отчет</button>
+                        </div>
+                    </div>
+                    
+                    <div class="documents-list">
+                        <h3>Список документов</h3>
+                        <div class="search-filter-bar">
+                            <div class="search-group">
+                                <label for="documentSearch">Поиск:</label>
+                                <input type="text" id="documentSearch" placeholder="Найти документ...">
+                            </div>
+                            <div class="filter-group">
+                                <label for="documentTypeFilter">Тип:</label>
+                                <select id="documentTypeFilter">
+                                    <option value="">Все типы</option>
+                                    <option value="invoice">Счет-фактура</option>
+                                    <option value="act">Акт выполненных работ</option>
+                                    <option value="contract">Договор</option>
+                                    <option value="report">Отчет</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-secondary" id="clearDocumentFilters">Очистить</button>
+                        </div>
+                        <div class="doc-table">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Название</th>
+                                        <th>Тип</th>
+                                        <th>Дата создания</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="documentsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Модальное окно создания документа -->
+            <div id="documentModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" id="closeDocumentModal">&times;</span>
+                    <h3 id="documentModalTitle">Создать документ</h3>
+                    <form id="documentForm">
+                        <div class="form-group">
+                            <label for="documentTitle">Название документа:</label>
+                            <input type="text" id="documentTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="documentType">Тип документа:</label>
+                            <select id="documentType" required>
+                                <option value="">Выберите тип</option>
+                                <option value="invoice">Счет-фактура</option>
+                                <option value="act">Акт выполненных работ</option>
+                                <option value="contract">Договор</option>
+                                <option value="report">Отчет</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="documentContent">Содержание:</label>
+                            <textarea id="documentContent" rows="10" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="documentRecipient">Получатель:</label>
+                            <input type="text" id="documentRecipient">
+                        </div>
+                        <div class="form-group">
+                            <label for="documentStatus">Статус:</label>
+                            <select id="documentStatus">
+                                <option value="draft">Черновик</option>
+                                <option value="sent">Отправлен</option>
+                                <option value="signed">Подписан</option>
+                                <option value="archived">Архивирован</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                            <button type="button" class="btn btn-secondary" id="cancelDocumentBtn">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <div class="tab-header">
+                    <h2>Настройки</h2>
+                </div>
+                <div class="settings-content">
+                    <div class="settings-section">
+                        <h3>Внешний вид</h3>
+                        <div class="setting-item">
+                            <label for="themeSelect">Тема оформления:</label>
+                            <select id="themeSelect">
+                                <option value="windows95">Windows 95 Классика</option>
+                                <option value="modern">Минимализм</option>
+                            </select>
+                            <button class="btn btn-primary" id="applyThemeBtn">Применить</button>
+                        </div>
+                        <div class="theme-preview">
+                            <div class="preview-windows95">
+                                <h4>Windows 95 Классика</h4>
+                                <p>Классический серый интерфейс с 3D-эффектами и традиционными элементами управления Windows 95</p>
+                            </div>
+                            <div class="preview-modern">
+                                <h4>Минимализм</h4>
+                                <p>Современный минималистичный дизайн с чистыми линиями и нейтральными цветами</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Данные</h3>
+                        <div class="setting-item">
+                            <button class="btn btn-secondary" id="clearAllDataBtn">Очистить все данные</button>
+                            <span class="warning">Внимание: это действие необратимо!</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="notification" class="notification"></div>
+        
+        <!-- Модальное окно добавления товара -->
+        <div id="productModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="closeProductModal">&times;</span>
+                <h3>Добавить товар</h3>
+                <form id="productForm">
+                    <div class="form-group">
+                        <label for="productName">Название товара:</label>
+                        <input type="text" id="productName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="purchasePrice">Закупочная цена:</label>
+                        <input type="number" id="purchasePrice" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="salePrice">Планируемая цена продажи:</label>
+                        <input type="number" id="salePrice" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">Количество:</label>
+                        <input type="number" id="quantity" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productSupplier">Поставщик:</label>
+                        <select id="productSupplier" required>
+                            <option value="">Выберите поставщика</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Добавить</button>
+                        <button type="button" class="btn btn-secondary" id="cancelProductBtn">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Модальное окно добавления поставщика -->
+        <div id="supplierModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="closeSupplierModal">&times;</span>
+                <h3>Добавить поставщика</h3>
+                <form id="supplierForm">
+                    <div class="form-group">
+                        <label for="supplierType">Тип поставщика:</label>
+                        <select id="supplierType" required>
+                            <option value="">Выберите тип</option>
+                            <option value="self_employed">Самозанятый</option>
+                            <option value="individual">ИП</option>
+                            <option value="company">ООО</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Поля для самозанятого -->
+                    <div id="selfEmployedFields" class="supplier-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="selfFirstName">Имя:</label>
+                            <input type="text" id="selfFirstName">
+                        </div>
+                        <div class="form-group">
+                            <label for="selfLastName">Фамилия:</label>
+                            <input type="text" id="selfLastName">
+                        </div>
+                        <div class="form-group">
+                            <label for="selfMiddleName">Отчество:</label>
+                            <input type="text" id="selfMiddleName">
+                        </div>
+                        <div class="form-group">
+                            <label for="selfInn">ИНН:</label>
+                            <input type="text" id="selfInn">
+                        </div>
+                    </div>
+                    
+                    <!-- Поля для ИП -->
+                    <div id="individualFields" class="supplier-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="indName">Наименование ИП:</label>
+                            <input type="text" id="indName">
+                        </div>
+                        <div class="form-group">
+                            <label for="indInn">ИНН:</label>
+                            <input type="text" id="indInn">
+                        </div>
+                        <div class="form-group">
+                            <label for="indOgrn">ОГРН:</label>
+                            <input type="text" id="indOgrn">
+                        </div>
+                    </div>
+                    
+                    <!-- Поля для ООО -->
+                    <div id="companyFields" class="supplier-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="compName">Название организации:</label>
+                            <input type="text" id="compName">
+                        </div>
+                        <div class="form-group">
+                            <label for="compInn">ИНН:</label>
+                            <input type="text" id="compInn">
+                        </div>
+                        <div class="form-group">
+                            <label for="compOgrn">ОГРН:</label>
+                            <input type="text" id="compOgrn">
+                        </div>
+                    </div>
+                    
+                    <!-- Общие поля для всех типов -->
+                    <div class="form-group">
+                        <label for="supplierPhone">Телефон:</label>
+                        <input type="tel" id="supplierPhone">
+                    </div>
+                    <div class="form-group">
+                        <label for="supplierEmail">Email:</label>
+                        <input type="email" id="supplierEmail">
+                    </div>
+                    <div class="form-group">
+                        <label for="supplierAddress">Адрес:</label>
+                        <input type="text" id="supplierAddress">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Добавить</button>
+                        <button type="button" class="btn btn-secondary" id="cancelSupplierBtn">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

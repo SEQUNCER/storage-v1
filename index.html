@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Storage - Система управления складом</title>
+    <title>AF-Storage - Система управления складом</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="icon" type="image/jpeg" href="icon.jpg">
 </head>
 <body>
     <div class="container">
         <header class="header">
             <div class="title-bar">
                 <div class="app-title">
-                    <img src="icon.png" alt="Storage" class="app-icon">
-                    <h1>Storage</h1>
+                    <img src="icon.jpg" alt="AF-Storage" class="app-icon">
+                    <h1>AF-Storage</h1>
                 </div>
                 <div class="window-controls">
                     <div class="window-control" title="Свернуть">_</div>
@@ -321,6 +321,62 @@
                 </div>
             </div>
             
+            <!-- Модальное окно управления сотрудниками -->
+            <div id="userModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" id="closeUserModal">&times;</span>
+                    <h3 id="userModalTitle">Добавить сотрудника</h3>
+                    <form id="userForm">
+                        <div class="form-group">
+                            <label for="userUsername">Имя пользователя:</label>
+                            <input type="text" id="userUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="userFullName">Полное имя:</label>
+                            <input type="text" id="userFullName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="userEmail">Email:</label>
+                            <input type="email" id="userEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="userPassword">Пароль:</label>
+                            <input type="password" id="userPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="userRole">Роль:</label>
+                            <select id="userRole" required>
+                                <option value="">Выберите роль</option>
+                                <option value="admin">Администратор</option>
+                                <option value="manager">Менеджер</option>
+                                <option value="employee">Сотрудник</option>
+                                <option value="viewer">Наблюдатель</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="userStatus">Статус:</label>
+                            <select id="userStatus" required>
+                                <option value="active">Активен</option>
+                                <option value="inactive">Неактивен</option>
+                                <option value="suspended">Приостановлен</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="userPhone">Телефон:</label>
+                            <input type="tel" id="userPhone">
+                        </div>
+                        <div class="form-group">
+                            <label for="userDepartment">Отдел:</label>
+                            <input type="text" id="userDepartment">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                            <button type="button" class="btn btn-secondary" id="cancelUserBtn">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
             <!-- Statistics Tab -->
             <div id="statistics" class="tab-content">
                 <div class="tab-header">
@@ -603,20 +659,10 @@
                         <div class="setting-item">
                             <label for="themeSelect">Тема оформления:</label>
                             <select id="themeSelect">
-                                <option value="windows95">Windows 95 Классика</option>
-                                <option value="modern">Минимализм</option>
+                                <option value="dark">Темная тема</option>
+                                <option value="light">Светлая тема</option>
                             </select>
                             <button class="btn btn-primary" id="applyThemeBtn">Применить</button>
-                        </div>
-                        <div class="theme-preview">
-                            <div class="preview-windows95">
-                                <h4>Windows 95 Классика</h4>
-                                <p>Классический серый интерфейс с 3D-эффектами и традиционными элементами управления Windows 95</p>
-                            </div>
-                            <div class="preview-modern">
-                                <h4>Минимализм</h4>
-                                <p>Современный минималистичный дизайн с чистыми линиями и нейтральными цветами</p>
-                            </div>
                         </div>
                     </div>
                     
@@ -762,53 +808,6 @@
                     </div>
                 </form>
             </div>
-        </div>
-    </div>
-
-    <!-- User Management Modal -->
-    <div id="userModal" class="modal">
-        <div class="modal-content">
-            <span class="close" id="closeUserModal">&times;</span>
-            <h3 id="userModalTitle">Добавить пользователя</h3>
-            <form id="userForm">
-                <div class="form-group">
-                    <label for="userUsername">Имя пользователя:</label>
-                    <input type="text" id="userUsername" required>
-                </div>
-                <div class="form-group">
-                    <label for="userFullName">Полное имя:</label>
-                    <input type="text" id="userFullName" required>
-                </div>
-                <div class="form-group">
-                    <label for="userEmail">Email:</label>
-                    <input type="email" id="userEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="userPassword">Пароль:</label>
-                    <input type="password" id="userPassword">
-                </div>
-                <div class="form-group">
-                    <label for="userRole">Роль:</label>
-                    <select id="userRole" required>
-                        <option value="">Выберите роль</option>
-                        <option value="admin">Администратор</option>
-                        <option value="manager">Менеджер</option>
-                        <option value="employee">Сотрудник</option>
-                        <option value="viewer">Наблюдатель</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="userStatus">Статус:</label>
-                    <select id="userStatus">
-                        <option value="active">Активен</option>
-                        <option value="inactive">Неактивен</option>
-                    </select>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Сохранить</button>
-                    <button type="button" class="btn btn-secondary" id="cancelUserBtn">Отмена</button>
-                </div>
-            </form>
         </div>
     </div>
 

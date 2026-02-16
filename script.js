@@ -56,26 +56,27 @@ class StorageApp {
                 if (!db.objectStoreNames.contains('documents')) {
                     db.createObjectStore('documents', { keyPath: 'id', autoIncrement: true });
                 }
+
+                if (!db.objectStoreNames.contains('users')) {
+                    db.createObjectStore('users', { keyPath: 'id', autoIncrement: true });
+                }
+
+                if (!db.objectStoreNames.contains('activity')) {
+                    db.createObjectStore('activity', { keyPath: 'id', autoIncrement: true });
+                }
             };
         });
     }
 
     setupEventListeners() {
+        // Проверяем, что DOM загружен
+        if (!document.getElementById('addUserBtn')) {
+            console.error('addUserBtn not found in DOM');
+            return;
+        }
+        
         const tabButtons = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
-
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabName = btn.getAttribute('data-tab');
-                this.switchTab(tabName);
-                
-                // Refresh statistics when statistics tab is opened
-                if (tabName === 'statistics') {
-                    this.loadStatistics();
-                }
-            });
-        });
 
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -86,196 +87,399 @@ class StorageApp {
 
                 button.classList.add('active');
                 document.getElementById(targetTab).classList.add('active');
+                
+                // Refresh statistics when statistics tab is opened
+                if (targetTab === 'statistics') {
+                    this.loadStatistics();
+                }
             });
         });
 
-        document.getElementById('importBtn').addEventListener('click', () => {
-            document.getElementById('importFile').click();
-        });
+        // Import/Export functionality
+        const importBtn = document.getElementById('importBtn');
+        if (importBtn) {
+            importBtn.addEventListener('click', () => {
+                document.getElementById('importFile').click();
+            });
+        }
 
-        document.getElementById('importFile').addEventListener('change', (e) => {
-            this.importData(e.target.files[0]);
-        });
+        const importFile = document.getElementById('importFile');
+        if (importFile) {
+            importFile.addEventListener('change', (e) => {
+                this.importData(e.target.files[0]);
+            });
+        }
 
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            this.exportData();
-        });
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportData();
+            });
+        }
 
         // Модальные окна
-        document.getElementById('addProductBtn').addEventListener('click', () => {
-            this.openProductModal();
-        });
+        const addProductBtn = document.getElementById('addProductBtn');
+        if (addProductBtn) {
+            addProductBtn.addEventListener('click', () => {
+                this.openProductModal();
+            });
+        }
 
-        document.getElementById('addSupplierBtn').addEventListener('click', () => {
-            this.openSupplierModal();
-        });
+        const addSupplierBtn = document.getElementById('addSupplierBtn');
+        if (addSupplierBtn) {
+            addSupplierBtn.addEventListener('click', () => {
+                this.openSupplierModal();
+            });
+        }
 
-        document.getElementById('closeProductModal').addEventListener('click', () => {
-            this.closeProductModal();
-        });
+        const closeProductModal = document.getElementById('closeProductModal');
+        if (closeProductModal) {
+            closeProductModal.addEventListener('click', () => {
+                this.closeProductModal();
+            });
+        }
 
-        document.getElementById('closeSupplierModal').addEventListener('click', () => {
-            this.closeSupplierModal();
-        });
+        const closeSupplierModal = document.getElementById('closeSupplierModal');
+        if (closeSupplierModal) {
+            closeSupplierModal.addEventListener('click', () => {
+                this.closeSupplierModal();
+            });
+        }
 
-        document.getElementById('cancelProductBtn').addEventListener('click', () => {
-            this.closeProductModal();
-        });
+        const cancelProductBtn = document.getElementById('cancelProductBtn');
+        if (cancelProductBtn) {
+            cancelProductBtn.addEventListener('click', () => {
+                this.closeProductModal();
+            });
+        }
 
-        document.getElementById('cancelSupplierBtn').addEventListener('click', () => {
-            this.closeSupplierModal();
-        });
+        const cancelSupplierBtn = document.getElementById('cancelSupplierBtn');
+        if (cancelSupplierBtn) {
+            cancelSupplierBtn.addEventListener('click', () => {
+                this.closeSupplierModal();
+            });
+        }
 
-        document.getElementById('productForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveProduct();
-        });
+        const productForm = document.getElementById('productForm');
+        if (productForm) {
+            productForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveProduct();
+            });
+        }
 
-        document.getElementById('supplierForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveSupplier();
-        });
+        const supplierForm = document.getElementById('supplierForm');
+        if (supplierForm) {
+            supplierForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveSupplier();
+            });
+        }
 
-        document.getElementById('supplierType').addEventListener('change', (e) => {
-            this.toggleSupplierFields(e.target.value);
-        });
+        const supplierType = document.getElementById('supplierType');
+        if (supplierType) {
+            supplierType.addEventListener('change', (e) => {
+                this.toggleSupplierFields(e.target.value);
+            });
+        }
 
         // Search and filter functionality
-        document.getElementById('productSearch').addEventListener('input', () => {
-            this.filterProducts();
-        });
+        const productSearch = document.getElementById('productSearch');
+        if (productSearch) {
+            productSearch.addEventListener('input', () => {
+                this.filterProducts();
+            });
+        }
 
-        document.getElementById('supplierFilter').addEventListener('change', () => {
-            this.filterProducts();
-        });
+        const supplierFilter = document.getElementById('supplierFilter');
+        if (supplierFilter) {
+            supplierFilter.addEventListener('change', () => {
+                this.filterProducts();
+            });
+        }
 
-        document.getElementById('stockFilter').addEventListener('change', () => {
-            this.filterProducts();
-        });
+        const stockFilter = document.getElementById('stockFilter');
+        if (stockFilter) {
+            stockFilter.addEventListener('change', () => {
+                this.filterProducts();
+            });
+        }
 
-        document.getElementById('clearFilters').addEventListener('click', () => {
-            this.clearProductFilters();
-        });
+        const clearFilters = document.getElementById('clearFilters');
+        if (clearFilters) {
+            clearFilters.addEventListener('click', () => {
+                this.clearProductFilters();
+            });
+        }
 
-        document.getElementById('supplierSearch').addEventListener('input', () => {
-            this.filterSuppliers();
-        });
+        const supplierSearch = document.getElementById('supplierSearch');
+        if (supplierSearch) {
+            supplierSearch.addEventListener('input', () => {
+                this.filterSuppliers();
+            });
+        }
 
-        document.getElementById('supplierTypeFilter').addEventListener('change', () => {
-            this.filterSuppliers();
-        });
+        const supplierTypeFilter = document.getElementById('supplierTypeFilter');
+        if (supplierTypeFilter) {
+            supplierTypeFilter.addEventListener('change', () => {
+                this.filterSuppliers();
+            });
+        }
 
-        document.getElementById('clearSupplierFilters').addEventListener('click', () => {
-            this.clearSupplierFilters();
-        });
+        const clearSupplierFilters = document.getElementById('clearSupplierFilters');
+        if (clearSupplierFilters) {
+            clearSupplierFilters.addEventListener('click', () => {
+                this.clearSupplierFilters();
+            });
+        }
 
         // Sales functionality
-        document.getElementById('newSaleBtn').addEventListener('click', () => {
-            this.startNewSale();
-        });
+        const newSaleBtn = document.getElementById('newSaleBtn');
+        if (newSaleBtn) {
+            newSaleBtn.addEventListener('click', () => {
+                this.startNewSale();
+            });
+        }
 
-        document.getElementById('saleProductSearch').addEventListener('input', () => {
-            this.filterAvailableProducts();
-        });
+        const saleProductSearch = document.getElementById('saleProductSearch');
+        if (saleProductSearch) {
+            saleProductSearch.addEventListener('input', () => {
+                this.filterAvailableProducts();
+            });
+        }
 
-        document.getElementById('completeSaleBtn').addEventListener('click', () => {
-            this.completeSale();
-        });
+        const completeSaleBtn = document.getElementById('completeSaleBtn');
+        if (completeSaleBtn) {
+            completeSaleBtn.addEventListener('click', () => {
+                this.completeSale();
+            });
+        }
 
-        document.getElementById('clearCartBtn').addEventListener('click', () => {
-            this.clearCart();
-        });
+        const clearCartBtn = document.getElementById('clearCartBtn');
+        if (clearCartBtn) {
+            clearCartBtn.addEventListener('click', () => {
+                this.clearCart();
+            });
+        }
 
-        document.getElementById('refreshSalesBtn').addEventListener('click', () => {
-            this.loadSalesHistory();
-        });
+        const refreshSalesBtn = document.getElementById('refreshSalesBtn');
+        if (refreshSalesBtn) {
+            refreshSalesBtn.addEventListener('click', () => {
+                this.loadSalesHistory();
+            });
+        }
 
         // Document management functionality
-        document.getElementById('createDocumentBtn').addEventListener('click', () => {
-            this.openDocumentModal();
-        });
+        const createDocumentBtn = document.getElementById('createDocumentBtn');
+        if (createDocumentBtn) {
+            createDocumentBtn.addEventListener('click', () => {
+                this.openDocumentModal();
+            });
+        }
 
-        document.getElementById('closeDocumentModal').addEventListener('click', () => {
-            this.closeDocumentModal();
-        });
+        const closeDocumentModal = document.getElementById('closeDocumentModal');
+        if (closeDocumentModal) {
+            closeDocumentModal.addEventListener('click', () => {
+                this.closeDocumentModal();
+            });
+        }
 
-        document.getElementById('cancelDocumentBtn').addEventListener('click', () => {
-            this.closeDocumentModal();
-        });
+        const cancelDocumentBtn = document.getElementById('cancelDocumentBtn');
+        if (cancelDocumentBtn) {
+            cancelDocumentBtn.addEventListener('click', () => {
+                this.closeDocumentModal();
+            });
+        }
 
-        document.getElementById('documentForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveDocument();
-        });
+        const documentForm = document.getElementById('documentForm');
+        if (documentForm) {
+            documentForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveDocument();
+            });
+        }
 
-        document.getElementById('documentSearch').addEventListener('input', () => {
-            this.filterDocuments();
-        });
+        const documentSearch = document.getElementById('documentSearch');
+        if (documentSearch) {
+            documentSearch.addEventListener('input', () => {
+                this.filterDocuments();
+            });
+        }
 
-        document.getElementById('documentTypeFilter').addEventListener('change', () => {
-            this.filterDocuments();
-        });
+        const documentTypeFilter = document.getElementById('documentTypeFilter');
+        if (documentTypeFilter) {
+            documentTypeFilter.addEventListener('change', () => {
+                this.filterDocuments();
+            });
+        }
 
-        document.getElementById('clearDocumentFilters').addEventListener('click', () => {
-            this.clearDocumentFilters();
-        });
+        const clearDocumentFilters = document.getElementById('clearDocumentFilters');
+        if (clearDocumentFilters) {
+            clearDocumentFilters.addEventListener('click', () => {
+                this.clearDocumentFilters();
+            });
+        }
 
         // Settings functionality
-        document.getElementById('applyThemeBtn').addEventListener('click', () => {
-            this.applyTheme();
-        });
+        const applyThemeBtn = document.getElementById('applyThemeBtn');
+        if (applyThemeBtn) {
+            applyThemeBtn.addEventListener('click', () => {
+                this.applyTheme();
+            });
+        }
 
-        document.getElementById('clearAllDataBtn').addEventListener('click', () => {
-            this.clearAllData();
-        });
+        const clearAllDataBtn = document.getElementById('clearAllDataBtn');
+        if (clearAllDataBtn) {
+            clearAllDataBtn.addEventListener('click', () => {
+                this.clearAllData();
+            });
+        }
 
         // Statistics functionality
-        document.getElementById('generateReportBtn').addEventListener('click', () => {
-            this.generateReport();
-        });
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        if (generateReportBtn) {
+            generateReportBtn.addEventListener('click', () => {
+                this.generateReport();
+            });
+        }
 
         // Backup and restore functionality
-        document.getElementById('backupDataBtn').addEventListener('click', () => {
-            this.backupData();
-        });
+        const backupDataBtn = document.getElementById('backupDataBtn');
+        if (backupDataBtn) {
+            backupDataBtn.addEventListener('click', () => {
+                this.backupData();
+            });
+        }
 
-        document.getElementById('restoreDataBtn').addEventListener('click', () => {
-            document.getElementById('restoreFile').click();
-        });
+        const restoreDataBtn = document.getElementById('restoreDataBtn');
+        if (restoreDataBtn) {
+            restoreDataBtn.addEventListener('click', () => {
+                document.getElementById('restoreFile').click();
+            });
+        }
 
-        document.getElementById('restoreFile').addEventListener('change', (e) => {
-            this.restoreData(e.target.files[0]);
-        });
+        const restoreFile = document.getElementById('restoreFile');
+        if (restoreFile) {
+            restoreFile.addEventListener('change', (e) => {
+                this.restoreData(e.target.files[0]);
+            });
+        }
 
         // Notification system functionality
-        document.getElementById('clearNotificationsBtn').addEventListener('click', () => {
-            this.clearNotifications();
-        });
+        const clearNotificationsBtn = document.getElementById('clearNotificationsBtn');
+        if (clearNotificationsBtn) {
+            clearNotificationsBtn.addEventListener('click', () => {
+                this.clearNotifications();
+            });
+        }
 
-        document.getElementById('refreshNotificationsBtn').addEventListener('click', () => {
-            this.loadNotifications();
-        });
+        const refreshNotificationsBtn = document.getElementById('refreshNotificationsBtn');
+        if (refreshNotificationsBtn) {
+            refreshNotificationsBtn.addEventListener('click', () => {
+                this.loadNotifications();
+            });
+        }
 
-        document.getElementById('notificationFilter').addEventListener('change', () => {
-            this.filterNotifications();
-        });
+        const notificationFilter = document.getElementById('notificationFilter');
+        if (notificationFilter) {
+            notificationFilter.addEventListener('change', () => {
+                this.filterNotifications();
+            });
+        }
 
         // Alert settings listeners
-        document.getElementById('lowStockAlert').addEventListener('change', () => {
-            this.updateAlertSettings();
-        });
+        const lowStockAlert = document.getElementById('lowStockAlert');
+        if (lowStockAlert) {
+            lowStockAlert.addEventListener('change', () => {
+                this.updateAlertSettings();
+            });
+        }
 
-        document.getElementById('outOfStockAlert').addEventListener('change', () => {
-            this.updateAlertSettings();
-        });
+        const outOfStockAlert = document.getElementById('outOfStockAlert');
+        if (outOfStockAlert) {
+            outOfStockAlert.addEventListener('change', () => {
+                this.updateAlertSettings();
+            });
+        }
 
-        document.getElementById('newSaleAlert').addEventListener('change', () => {
-            this.updateAlertSettings();
-        });
+        const newSaleAlert = document.getElementById('newSaleAlert');
+        if (newSaleAlert) {
+            newSaleAlert.addEventListener('change', () => {
+                this.updateAlertSettings();
+            });
+        }
 
-        document.getElementById('documentAlert').addEventListener('change', () => {
-            this.updateAlertSettings();
-        });
+        const documentAlert = document.getElementById('documentAlert');
+        if (documentAlert) {
+            documentAlert.addEventListener('change', () => {
+                this.updateAlertSettings();
+            });
+        }
+
+        // User management functionality
+        const addUserBtn = document.getElementById('addUserBtn');
+        if (addUserBtn) {
+            addUserBtn.addEventListener('click', () => {
+                this.openUserModal();
+            });
+        }
+
+        const closeUserModal = document.getElementById('closeUserModal');
+        if (closeUserModal) {
+            closeUserModal.addEventListener('click', () => {
+                this.closeUserModal();
+            });
+        }
+
+        const cancelUserBtn = document.getElementById('cancelUserBtn');
+        if (cancelUserBtn) {
+            cancelUserBtn.addEventListener('click', () => {
+                this.closeUserModal();
+            });
+        }
+
+        const userForm = document.getElementById('userForm');
+        if (userForm) {
+            userForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveUser();
+            });
+        }
+
+        const userSearch = document.getElementById('userSearch');
+        if (userSearch) {
+            userSearch.addEventListener('input', () => {
+                this.filterUsers();
+            });
+        }
+
+        const roleFilter = document.getElementById('roleFilter');
+        if (roleFilter) {
+            roleFilter.addEventListener('change', () => {
+                this.filterUsers();
+            });
+        }
+
+        const clearUserFilters = document.getElementById('clearUserFilters');
+        if (clearUserFilters) {
+            clearUserFilters.addEventListener('click', () => {
+                this.clearUserFilters();
+            });
+        }
+
+        const refreshActivityBtn = document.getElementById('refreshActivityBtn');
+        if (refreshActivityBtn) {
+            refreshActivityBtn.addEventListener('click', () => {
+                this.loadActivityLog();
+            });
+        }
+
+        const activityFilter = document.getElementById('activityFilter');
+        if (activityFilter) {
+            activityFilter.addEventListener('change', () => {
+                this.filterActivity();
+            });
+        }
 
         // Закрытие модальных окон по клику вне их
         window.addEventListener('click', (e) => {
@@ -295,7 +499,7 @@ class StorageApp {
             const text = await file.text();
             const data = JSON.parse(text);
 
-            const transaction = this.db.transaction(['warehouse', 'suppliers', 'sales', 'documents'], 'readwrite');
+            const transaction = this.db.transaction(['warehouse', 'suppliers', 'sales', 'documents', 'users', 'activity'], 'readwrite');
 
             if (data.warehouse) {
                 await this.clearStore('warehouse');
@@ -322,6 +526,20 @@ class StorageApp {
                 await this.clearStore('documents');
                 data.documents.forEach(item => {
                     transaction.objectStore('documents').add(item);
+                });
+            }
+
+            if (data.users) {
+                await this.clearStore('users');
+                data.users.forEach(item => {
+                    transaction.objectStore('users').add(item);
+                });
+            }
+
+            if (data.activity) {
+                await this.clearStore('activity');
+                data.activity.forEach(item => {
+                    transaction.objectStore('activity').add(item);
                 });
             }
 
@@ -357,6 +575,8 @@ class StorageApp {
                 suppliers: await this.getAllData('suppliers'),
                 sales: await this.getAllData('sales'),
                 documents: await this.getAllData('documents'),
+                users: await this.getAllData('users'),
+                activity: await this.getAllData('activity'),
                 exportDate: new Date().toISOString()
             };
 
@@ -408,6 +628,8 @@ class StorageApp {
         await this.loadSalesHistory();
         await this.loadAvailableProducts();
         await this.loadDocuments();
+        await this.loadUsers();
+        await this.loadActivityLog();
         await this.loadStatistics();
     }
 
@@ -844,9 +1066,19 @@ class StorageApp {
     }
 
     clearProductFilters() {
-        document.getElementById('productSearch').value = '';
-        document.getElementById('supplierFilter').value = '';
-        document.getElementById('stockFilter').value = '';
+        const productSearch = document.getElementById('productSearch');
+        const supplierFilter = document.getElementById('supplierFilter');
+        const stockFilter = document.getElementById('stockFilter');
+        
+        if (productSearch) {
+            productSearch.value = '';
+        }
+        if (supplierFilter) {
+            supplierFilter.value = '';
+        }
+        if (stockFilter) {
+            stockFilter.value = '';
+        }
         this.filterProducts();
     }
 
@@ -867,8 +1099,15 @@ class StorageApp {
     }
 
     clearSupplierFilters() {
-        document.getElementById('supplierSearch').value = '';
-        document.getElementById('supplierTypeFilter').value = '';
+        const supplierSearch = document.getElementById('supplierSearch');
+        const supplierTypeFilter = document.getElementById('supplierTypeFilter');
+        
+        if (supplierSearch) {
+            supplierSearch.value = '';
+        }
+        if (supplierTypeFilter) {
+            supplierTypeFilter.value = '';
+        }
         this.filterSuppliers();
     }
 
@@ -1014,8 +1253,16 @@ class StorageApp {
     clearCart() {
         this.cart = [];
         this.updateCartDisplay();
-        document.getElementById('customerName').value = '';
-        document.getElementById('paymentMethod').value = 'cash';
+        
+        const customerName = document.getElementById('customerName');
+        const paymentMethod = document.getElementById('paymentMethod');
+        
+        if (customerName) {
+            customerName.value = '';
+        }
+        if (paymentMethod) {
+            paymentMethod.value = 'cash';
+        }
     }
 
     async completeSale() {
@@ -1160,7 +1407,11 @@ ${sale.items.map(item =>
 
     startNewSale() {
         this.clearCart();
-        document.getElementById('saleProductSearch').value = '';
+        
+        const saleProductSearch = document.getElementById('saleProductSearch');
+        if (saleProductSearch) {
+            saleProductSearch.value = '';
+        }
         this.filterAvailableProducts();
     }
 
@@ -1368,40 +1619,53 @@ ${document.content}
     }
 
     clearDocumentFilters() {
-        document.getElementById('documentSearch').value = '';
-        document.getElementById('documentTypeFilter').value = '';
+        const documentSearch = document.getElementById('documentSearch');
+        const documentTypeFilter = document.getElementById('documentTypeFilter');
+        
+        if (documentSearch) {
+            documentSearch.value = '';
+        }
+        if (documentTypeFilter) {
+            documentTypeFilter.value = '';
+        }
         this.filterDocuments();
     }
 
     // Theme management methods
     loadSavedTheme() {
-        const savedTheme = localStorage.getItem('storage-theme') || 'windows95';
-        document.getElementById('themeSelect').value = savedTheme;
+        const savedTheme = localStorage.getItem('storage-theme') || 'dark';
+        const themeSelect = document.getElementById('themeSelect');
+        if (themeSelect) {
+            themeSelect.value = savedTheme;
+        }
         this.applyTheme(savedTheme);
     }
 
     applyTheme(themeName = null) {
-        const theme = themeName || document.getElementById('themeSelect').value;
+        const themeSelect = document.getElementById('themeSelect');
+        const theme = themeName || (themeSelect ? themeSelect.value : 'dark');
         const body = document.body;
         
-        // Remove all theme classes
-        body.classList.remove('modern');
+        console.log('Applying theme:', theme);
         
-        if (theme === 'modern') {
-            body.classList.add('modern');
+        // Remove all theme classes
+        body.classList.remove('light-theme');
+        
+        if (theme === 'light') {
+            body.classList.add('light-theme');
         }
         
         // Save theme preference
         localStorage.setItem('storage-theme', theme);
         
-        this.showNotification(`Тема "${theme === 'modern' ? 'Минимализм' : 'Windows 95 Классика'}" применена`, 'success');
+        this.showNotification(`Тема "${theme === 'light' ? 'Светлая' : 'Темная'}" применена`, 'success');
     }
 
     async clearAllData() {
         if (confirm('Вы уверены, что хотите удалить все данные? Это действие необратимо и удалит все товары, поставщиков, продажи и документы!')) {
             try {
                 // Clear all object stores
-                const stores = ['warehouse', 'suppliers', 'sales', 'documents'];
+                const stores = ['warehouse', 'suppliers', 'sales', 'documents', 'users', 'activity'];
                 
                 for (const store of stores) {
                     const allData = await this.getAllData(store);
@@ -1871,7 +2135,7 @@ ${suppliers.map(s =>
 
     async clearAllDataInternal() {
         // Clear all object stores without confirmation
-        const stores = ['warehouse', 'suppliers', 'sales', 'documents'];
+        const stores = ['warehouse', 'suppliers', 'sales', 'documents', 'users', 'activity'];
         
         for (const store of stores) {
             const allData = await this.getAllData(store);
@@ -2104,7 +2368,7 @@ ${suppliers.map(s =>
     async estimateDatabaseSize() {
         try {
             let totalSize = 0;
-            const stores = ['warehouse', 'suppliers', 'sales', 'documents'];
+            const stores = ['warehouse', 'suppliers', 'sales', 'documents', 'users', 'activity'];
             
             for (const store of stores) {
                 const data = await this.getAllData(store);
@@ -2132,6 +2396,372 @@ ${suppliers.map(s =>
         
         // Add to notification system
         this.addNotification('Системное уведомление', message, type);
+    }
+
+    // User Management Functions
+    openUserModal(userId = null) {
+        console.log('openUserModal called with userId:', userId);
+        
+        const modal = document.getElementById('userModal');
+        const title = document.getElementById('userModalTitle');
+        const form = document.getElementById('userForm');
+        
+        console.log('Modal element:', modal);
+        console.log('Title element:', title);
+        console.log('Form element:', form);
+        
+        if (!modal || !title || !form) {
+            console.error('Required modal elements not found');
+            this.showNotification('Ошибка: элементы модального окна не найдены', 'error');
+            return;
+        }
+        
+        form.reset();
+        
+        if (userId) {
+            title.textContent = 'Редактировать сотрудника';
+            this.loadUserData(userId);
+        } else {
+            title.textContent = 'Добавить сотрудника';
+            // Восстанавливаем required для пароля при добавлении нового пользователя
+            const passwordField = document.getElementById('userPassword');
+            if (passwordField) {
+                passwordField.setAttribute('required', '');
+            }
+        }
+        
+        modal.style.display = 'block';
+        console.log('Modal should now be visible');
+    }
+
+    closeUserModal() {
+        document.getElementById('userModal').style.display = 'none';
+    }
+
+    async loadUserData(userId) {
+        try {
+            const user = await this.getDataById('users', userId);
+            if (user) {
+                document.getElementById('userUsername').value = user.username;
+                document.getElementById('userFullName').value = user.fullName;
+                document.getElementById('userEmail').value = user.email;
+                document.getElementById('userRole').value = user.role;
+                document.getElementById('userStatus').value = user.status;
+                document.getElementById('userPhone').value = user.phone || '';
+                document.getElementById('userDepartment').value = user.department || '';
+                document.getElementById('userPassword').value = ''; // Don't show password
+                document.getElementById('userPassword').removeAttribute('required');
+                
+                this.editingUserId = userId;
+            }
+        } catch (error) {
+            this.showNotification('Ошибка загрузки данных пользователя', 'error');
+        }
+    }
+
+    async saveUser() {
+        const formData = {
+            username: document.getElementById('userUsername').value,
+            fullName: document.getElementById('userFullName').value,
+            email: document.getElementById('userEmail').value,
+            password: document.getElementById('userPassword').value,
+            role: document.getElementById('userRole').value,
+            status: document.getElementById('userStatus').value,
+            phone: document.getElementById('userPhone').value,
+            department: document.getElementById('userDepartment').value,
+            createdAt: new Date().toISOString(),
+            lastLogin: null
+        };
+
+        try {
+            if (this.editingUserId) {
+                // Update existing user
+                const existingUser = await this.getDataById('users', this.editingUserId);
+                const updatedUser = { ...existingUser, ...formData };
+                if (formData.password) {
+                    updatedUser.password = formData.password;
+                }
+                await this.updateData('users', updatedUser);
+                this.showNotification('Сотрудник успешно обновлен', 'success');
+                this.addActivity('update', `Обновлен сотрудник: ${formData.fullName}`);
+            } else {
+                // Add new user
+                await this.addData('users', formData);
+                this.showNotification('Сотрудник успешно добавлен', 'success');
+                this.addActivity('create', `Добавлен сотрудник: ${formData.fullName}`);
+            }
+
+            this.closeUserModal();
+            this.loadUsers();
+            this.editingUserId = null;
+        } catch (error) {
+            this.showNotification('Ошибка сохранения сотрудника', 'error');
+        }
+    }
+
+    async loadUsers() {
+        try {
+            const users = await this.getAllData('users');
+            this.users = users || [];
+            this.displayUsers();
+        } catch (error) {
+            this.showNotification('Ошибка загрузки сотрудников', 'error');
+        }
+    }
+
+    displayUsers() {
+        console.log('displayUsers called, this.users:', this.users);
+        
+        const tbody = document.getElementById('usersTableBody');
+        if (!tbody) {
+            console.error('usersTableBody not found');
+            return;
+        }
+        
+        tbody.innerHTML = '';
+
+        if (!this.users || this.users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Нет сотрудников</td></tr>';
+            return;
+        }
+
+        this.users.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${user.username}</td>
+                <td>${user.fullName}</td>
+                <td>${user.email}</td>
+                <td>${this.getRoleDisplay(user.role)}</td>
+                <td>${this.getStatusDisplay(user.status)}</td>
+                <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleString('ru-RU') : 'Никогда'}</td>
+                <td>
+                    <button class="btn btn-edit" onclick="app.editUser(${user.id})">Редактировать</button>
+                    <button class="btn btn-delete" onclick="app.deleteUser(${user.id})">Удалить</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        console.log('Users table populated');
+    }
+
+    getRoleDisplay(role) {
+        const roles = {
+            admin: 'Администратор',
+            manager: 'Менеджер',
+            employee: 'Сотрудник',
+            viewer: 'Наблюдатель'
+        };
+        return roles[role] || role;
+    }
+
+    getStatusDisplay(status) {
+        const statuses = {
+            active: 'Активен',
+            inactive: 'Неактивен',
+            suspended: 'Приостановлен'
+        };
+        return statuses[status] || status;
+    }
+
+    editUser(userId) {
+        this.openUserModal(userId);
+    }
+
+    async deleteUser(userId) {
+        if (!confirm('Вы уверены, что хотите удалить этого сотрудника?')) {
+            return;
+        }
+
+        try {
+            const user = await this.getDataById('users', userId);
+            await this.deleteData('users', userId);
+            this.showNotification('Сотрудник удален', 'success');
+            this.addActivity('delete', `Удален сотрудник: ${user.fullName}`);
+            this.loadUsers();
+        } catch (error) {
+            this.showNotification('Ошибка удаления сотрудника', 'error');
+        }
+    }
+
+    filterUsers() {
+        const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+        const roleFilter = document.getElementById('roleFilter').value;
+
+        const filteredUsers = this.users.filter(user => {
+            const matchesSearch = !searchTerm || 
+                user.username.toLowerCase().includes(searchTerm) ||
+                user.fullName.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm);
+
+            const matchesRole = !roleFilter || user.role === roleFilter;
+
+            return matchesSearch && matchesRole;
+        });
+
+        this.displayFilteredUsers(filteredUsers);
+    }
+
+    displayFilteredUsers(users) {
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = '';
+
+        if (!users || users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Сотрудники не найдены</td></tr>';
+            return;
+        }
+
+        users.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${user.username}</td>
+                <td>${user.fullName}</td>
+                <td>${user.email}</td>
+                <td>${this.getRoleDisplay(user.role)}</td>
+                <td>${this.getStatusDisplay(user.status)}</td>
+                <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleString('ru-RU') : 'Никогда'}</td>
+                <td>
+                    <button class="btn btn-edit" onclick="app.editUser(${user.id})">Редактировать</button>
+                    <button class="btn btn-delete" onclick="app.deleteUser(${user.id})">Удалить</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    clearUserFilters() {
+        const userSearch = document.getElementById('userSearch');
+        const roleFilter = document.getElementById('roleFilter');
+        
+        if (userSearch) {
+            userSearch.value = '';
+        }
+        if (roleFilter) {
+            roleFilter.value = '';
+        }
+        this.displayUsers();
+    }
+
+    async addActivity(type, description) {
+        const activity = {
+            type: type,
+            description: description,
+            timestamp: new Date().toISOString(),
+            userId: this.currentUser?.id || 'system'
+        };
+
+        try {
+            await this.addData('activity', activity);
+        } catch (error) {
+            console.error('Error adding activity:', error);
+        }
+    }
+
+    async loadActivityLog() {
+        try {
+            const activities = await this.getAllData('activity');
+            this.activities = activities || [];
+            this.displayActivity();
+        } catch (error) {
+            this.showNotification('Ошибка загрузки журнала активности', 'error');
+        }
+    }
+
+    displayActivity() {
+        const container = document.getElementById('activityList');
+        container.innerHTML = '';
+
+        if (!this.activities || this.activities.length === 0) {
+            container.innerHTML = '<p>Нет записей в журнале</p>';
+            return;
+        }
+
+        // Sort by timestamp (newest first)
+        const sortedActivities = [...this.activities].sort((a, b) => 
+            new Date(b.timestamp) - new Date(a.timestamp)
+        );
+
+        sortedActivities.slice(0, 50).forEach(activity => {
+            const item = document.createElement('div');
+            item.className = 'notification-item';
+            
+            const time = new Date(activity.timestamp).toLocaleString('ru-RU');
+            const icon = this.getActivityIcon(activity.type);
+            
+            item.innerHTML = `
+                <div class="notification-icon">${icon}</div>
+                <div class="notification-content">
+                    <div class="notification-title">${this.getActivityTypeDisplay(activity.type)}</div>
+                    <div class="notification-message">${activity.description}</div>
+                    <div class="notification-time">${time}</div>
+                </div>
+            `;
+            
+            container.appendChild(item);
+        });
+    }
+
+    getActivityIcon(type) {
+        const icons = {
+            login: '🔑',
+            create: '➕',
+            update: '✏️',
+            delete: '🗑️'
+        };
+        return icons[type] || '📝';
+    }
+
+    getActivityTypeDisplay(type) {
+        const types = {
+            login: 'Вход в систему',
+            create: 'Создание',
+            update: 'Обновление',
+            delete: 'Удаление'
+        };
+        return types[type] || type;
+    }
+
+    filterActivity() {
+        const filter = document.getElementById('activityFilter').value;
+        
+        const filteredActivities = filter === 'all' 
+            ? this.activities 
+            : this.activities.filter(activity => activity.type === filter);
+
+        this.displayFilteredActivity(filteredActivities);
+    }
+
+    displayFilteredActivity(activities) {
+        const container = document.getElementById('activityList');
+        container.innerHTML = '';
+
+        if (!activities || activities.length === 0) {
+            container.innerHTML = '<p>Нет записей для выбранных фильтров</p>';
+            return;
+        }
+
+        const sortedActivities = [...activities].sort((a, b) => 
+            new Date(b.timestamp) - new Date(a.timestamp)
+        );
+
+        sortedActivities.slice(0, 50).forEach(activity => {
+            const item = document.createElement('div');
+            item.className = 'notification-item';
+            
+            const time = new Date(activity.timestamp).toLocaleString('ru-RU');
+            const icon = this.getActivityIcon(activity.type);
+            
+            item.innerHTML = `
+                <div class="notification-icon">${icon}</div>
+                <div class="notification-content">
+                    <div class="notification-title">${this.getActivityTypeDisplay(activity.type)}</div>
+                    <div class="notification-message">${activity.description}</div>
+                    <div class="notification-time">${time}</div>
+                </div>
+            `;
+            
+            container.appendChild(item);
+        });
     }
 }
 
